@@ -21,8 +21,8 @@ type Location struct {
 	UserID string
 	Name   string
 
-	Long float64
 	Lat  float64
+	Long float64
 }
 
 type Task struct {
@@ -53,6 +53,15 @@ func (d database) GetNearbyLocations(userID string, long, lat float64) (l []Loca
 		long+0.001,
 		lat-0.001,
 		lat+0.001,
+	)
+
+	return
+}
+
+func (d database) GetTasks(userID, locationID string) (t []Task, err error) {
+	err = d.db.Select(&t, "SELECT * FROM tasks WHERE userid = $1 AND locationid = $2",
+		userID,
+		locationID,
 	)
 
 	return
