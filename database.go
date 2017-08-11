@@ -49,10 +49,10 @@ func NewDatabase(connection string) (d database, err error) {
 func (d database) GetNearbyLocations(userID string, long, lat float64) (l []Location, err error) {
 	err = d.db.Select(&l, "SELECT * FROM locations WHERE userid = $1 AND long > $2 AND long < $3 AND lat > $4 AND lat < $5",
 		userID,
-		long-0.001,
-		long+0.001,
-		lat-0.001,
-		lat+0.001,
+		long-0.02,
+		long+0.02,
+		lat-0.02,
+		lat+0.02,
 	)
 
 	return
