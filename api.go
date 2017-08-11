@@ -58,7 +58,8 @@ func (a api) CheckIn(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	for _, location := range l {
 		if Distance(Location{Lat: lat, Long: long}, location) <= 50 {
-			t, err := d.GetTasks("my-id", location.UUID)
+
+			t, err := d.GetTasks(userID, location.UUID)
 			if err != nil {
 				panic(err)
 			}
