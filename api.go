@@ -43,7 +43,7 @@ func (a api) CheckIn(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	err := decoder.Decode(&longLat)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
-		fmt.Fprint(w, err)
+		fmt.Fprintf(w, "Invalid data")
 
 		return
 	}
