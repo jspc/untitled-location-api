@@ -7,25 +7,30 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/satori/go.uuid"
 )
 
 type api struct {
 	router *httprouter.Router
 	listen string
 
-	streamersTasks map[string]map[string]chan Task
+	streamersSubscribers map[string]Subscriber
+}
+
+type message struct {
+	Type string
+	Body interface{}
 }
 
 func NewAPI(listen string) (a api, err error) {
 	a.listen = listen
-	a.streamersTasks = make(map[string]map[string]chan Task)
+	a.streamersSubscribers = make(map[string]Subscriber)
+
 	a.router = httprouter.New()
 
 	a.router.POST("/:user/checkin", a.CheckIn)
 
 	a.router.POST("/:user/stream", a.RegisterStream)
-	a.router.GET("/:user/stream/:streamID", a.Stream)
+	a.router.GET("/:user/stream", a.Stream)
 
 	return
 }
@@ -65,9 +70,10 @@ func (a api) CheckIn(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 			}
 
 			for _, task := range t {
-				for _, stream := range a.streamersTasks[userID] {
-					stream <- task
-				}
+				Publisher{NewAMQP(userID)}.Publish(message{
+					Type: "task-in-range",
+					Body: task,
+				})
 			}
 		}
 	}
@@ -76,44 +82,44 @@ func (a api) CheckIn(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 func (a api) RegisterStream(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	userID := ps.ByName("user")
 
-	_, ok := a.streamersTasks[userID]
+	_, ok := a.streamersSubscribers[userID]
 	if !ok {
-		a.streamersTasks[userID] = map[string]chan Task{}
+		a.streamersSubscribers[userID] = Subscriber{
+			AMQP: NewAMQP(userID),
+		}
 	}
-
-	streamID := uuid.NewV4().String()
-	a.streamersTasks[userID][streamID] = make(chan Task)
-
-	fmt.Fprintf(w, streamID)
 }
 
 func (a api) Stream(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	userID := ps.ByName("user")
-	streamID := ps.ByName("streamID")
 
 	respf, ok := w.(http.Flusher)
 	if !ok {
 		panic("not flushable")
 	}
 
-	taskStream, ok := a.streamersTasks[userID][streamID]
+	taskReceiver, ok := a.streamersSubscribers[userID]
 	if !ok {
 		w.WriteHeader(404)
 		return
 	}
 
-	defer delete(a.streamersTasks[userID], streamID)
+	taskStream, err := taskReceiver.Receive(userID)
+	if err != nil {
+		panic(err)
+	}
 
 	w.WriteHeader(200)
-	for t := range taskStream {
-		b, err := json.Marshal(t)
-		if err != nil {
-			panic(err)
+	for {
+		for t := range taskStream {
+			b := t.Body
+
+			b = append(b, '\n')
+
+			w.Write(b)
+			respf.Flush()
+
+			taskReceiver.ch.Ack(t.DeliveryTag, false)
 		}
-
-		b = append(b, '\n')
-
-		w.Write(b)
-		respf.Flush()
 	}
 }
