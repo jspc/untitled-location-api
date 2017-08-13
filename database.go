@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/jmoiron/sqlx"
 
 	_ "github.com/lib/pq"
@@ -58,6 +61,42 @@ func (d database) GetTasks(userID, locationID string) (t []Task, err error) {
 		userID,
 		locationID,
 	)
+
+	return
+}
+
+func (d database) InsertWithFields(i interface{}, table string, f ...string) (err error) {
+	p := placeholders(f)
+
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
+		table,
+		strings.Join(f, ", "),
+		strings.Join(p, ", "),
+	)
+
+	_, err = d.db.NamedExec(query, i)
+
+	return
+}
+
+func (d database) UpdateWithFields(i interface{}, table string, f ...string) (err error) {
+	p := placeholders(f)
+
+	query := fmt.Sprintf("UPDATE %s SET (%s) = (%s) WHERE uuid = :uuid",
+		table,
+		strings.Join(f, ", "),
+		strings.Join(p, ", "),
+	)
+
+	_, err = d.db.NamedExec(query, i)
+
+	return
+}
+
+func placeholders(f []string) (p []string) {
+	for _, field := range f {
+		p = append(p, fmt.Sprintf(":%s", field))
+	}
 
 	return
 }

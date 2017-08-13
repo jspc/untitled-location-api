@@ -109,9 +109,7 @@ func (a api) DeleteUser(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 func (d database) CreateUser(u *User) (err error) {
 	u.UUID = uuid.NewV4().String()
 
-	_, err = d.db.NamedExec("INSERT INTO users (uuid, email) VALUES (:uuid, :email)", u)
-
-	return
+	return d.InsertWithFields(u, "users", "uuid", "email")
 }
 
 func (d database) ReadUser(uuid string) (u User, err error) {
@@ -136,8 +134,7 @@ func (d database) ReadUser(uuid string) (u User, err error) {
 }
 
 func (d database) UpdateUser(u User) (err error) {
-	_, err = d.db.NamedExec("UPDATE users SET (uuid, email) = (:uuid, :email) WHERE uuid = :uuid", &u)
-	return
+	return d.UpdateWithFields(&u, "users", "uuid", "email")
 }
 
 func (d database) DeleteUser(u string) (err error) {
