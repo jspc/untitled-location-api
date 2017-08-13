@@ -11,11 +11,6 @@ type database struct {
 	db *sqlx.DB
 }
 
-type User struct {
-	UUID  string
-	Email string
-}
-
 type Location struct {
 	UUID   string
 	UserID string

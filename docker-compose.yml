@@ -11,6 +11,16 @@ services:
     ports:
       - "8008:8008"
 
+  stream:
+    build: .
+    command: ""
+    volumes:
+      - ./db:/db
+    links:
+      - database
+    ports:
+      - "8009:8008"
+
   database:
     image: postgres:9.6.3-alpine
     environment:

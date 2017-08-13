@@ -27,10 +27,15 @@ func NewAPI(listen string) (a api, err error) {
 
 	a.router = httprouter.New()
 
-	a.router.POST("/:user/checkin", a.CheckIn)
+	a.router.POST("/user/:user/checkin", a.CheckIn)
 
-	a.router.POST("/:user/stream", a.RegisterStream)
-	a.router.GET("/:user/stream", a.Stream)
+	a.router.POST("/user/:user/stream", a.RegisterStream)
+	a.router.GET("/user/:user/stream", a.Stream)
+
+	a.router.PUT("/user/", a.CreateUser)
+	a.router.GET("/user/:user", a.ReadUser)
+	a.router.POST("/user/:user", a.UpdateUser)
+	a.router.DELETE("/user/:user", a.DeleteUser)
 
 	return
 }
