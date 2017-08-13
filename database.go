@@ -14,15 +14,6 @@ type database struct {
 	db *sqlx.DB
 }
 
-type Location struct {
-	UUID   string
-	UserID string
-	Name   string
-
-	Lat  float64
-	Long float64
-}
-
 type Task struct {
 	UUID        string
 	UserID      string
