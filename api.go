@@ -110,16 +110,14 @@ func (a api) Stream(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	}
 
 	w.WriteHeader(200)
-	for {
-		for t := range taskStream {
-			b := t.Body
+	for t := range taskStream {
+		b := t.Body
 
-			b = append(b, '\n')
+		b = append(b, '\n')
 
-			w.Write(b)
-			respf.Flush()
+		w.Write(b)
+		respf.Flush()
 
-			taskReceiver.ch.Ack(t.DeliveryTag, false)
-		}
+		taskReceiver.ch.Ack(t.DeliveryTag, false)
 	}
 }
