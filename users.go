@@ -106,6 +106,46 @@ func (a api) DeleteUser(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	}
 }
 
+func (a api) CheckIn(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	userID := ps.ByName("user")
+
+	decoder := json.NewDecoder(r.Body)
+	longLat := make(map[string]float64)
+
+	err := decoder.Decode(&longLat)
+	if err != nil {
+		w.WriteHeader(http.StatusBadGateway)
+		fmt.Fprintf(w, "Invalid data")
+
+		return
+	}
+
+	long := longLat["long"]
+	lat := longLat["lat"]
+
+	l, err := d.GetNearbyLocations(userID, long, lat)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, location := range l {
+		if Distance(Location{Lat: lat, Long: long}, location) <= 50 {
+
+			t, err := d.GetTasks(userID, location.UUID)
+			if err != nil {
+				panic(err)
+			}
+
+			for _, task := range t {
+				Publisher{NewAMQP(userID)}.Publish(message{
+					Type: "task-in-range",
+					Body: task,
+				})
+			}
+		}
+	}
+}
+
 func (d database) CreateUser(u *User) (err error) {
 	u.UUID = uuid.NewV4().String()
 
