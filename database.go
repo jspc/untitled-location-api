@@ -14,21 +14,6 @@ type database struct {
 	db *sqlx.DB
 }
 
-type Task struct {
-	UUID        string
-	UserID      string
-	LocationID  string
-	Type        int
-	Title       string
-	Description string
-	Time        string
-}
-
-// Task Types
-const (
-	SimpleTask = iota
-)
-
 func NewDatabase(connection string) (d database, err error) {
 	d.db, err = sqlx.Connect("postgres", connection)
 

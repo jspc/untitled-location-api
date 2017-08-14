@@ -39,6 +39,12 @@ func NewAPI(listen string) (a api, err error) {
 	a.router.POST("/user/:user/location/:location", a.UpdateLocation)
 	a.router.DELETE("/user/:user/location/:location", a.DeleteLocation)
 
+	a.router.PUT("/user/:user/task", a.CreateTask)
+	a.router.GET("/user/:user/task", a.ReadAllTasks)
+	a.router.GET("/user/:user/task/:task", a.ReadTask)
+	a.router.POST("/user/:user/task/:task", a.UpdateTask)
+	a.router.DELETE("/user/:user/task/:task", a.DeleteTask)
+
 	return
 }
 
